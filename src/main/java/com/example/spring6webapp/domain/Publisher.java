@@ -2,7 +2,9 @@ package com.example.spring6webapp.domain;
 
 import jakarta.persistence.*;
 
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 @Entity
 public class Publisher {
@@ -16,6 +18,9 @@ public class Publisher {
     private String city;
     private String state;
     private String zip;
+
+    @OneToMany(mappedBy = "publisher" )
+    private Set<Book> books = new HashSet<>();
 
     public Publisher() {
     }
