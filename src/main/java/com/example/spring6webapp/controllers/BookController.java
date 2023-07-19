@@ -19,8 +19,10 @@ public class BookController {
         this.bookService = bookService;
     }
 
+    /* HTTP GET Request*/
     @RequestMapping("/books")
     public String getBooks(Model model) {
+
         model.addAttribute("books", bookService.findAll());
 
         return "books";
