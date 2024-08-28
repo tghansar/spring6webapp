@@ -6,15 +6,21 @@ import com.example.spring6webapp.domain.Publisher;
 import com.example.spring6webapp.repositories.AuthorRepository;
 import com.example.spring6webapp.repositories.BookRepository;
 import com.example.spring6webapp.repositories.PublisherRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+
+import java.util.HashSet;
 
 /*
 * Class representing data that will be available on startup.
 * Uses the H2 (in-memory) database.
 * */
 
+@Slf4j
 @Component //=> Spring Bean
+@RequiredArgsConstructor
 public class BootstrapData implements CommandLineRunner {
 
     private final AuthorRepository authorRepository;
@@ -27,57 +33,59 @@ public class BootstrapData implements CommandLineRunner {
     * provided by the Spring Data JPA.
     * */
 
-    public BootstrapData(AuthorRepository authorRepository,
-                         BookRepository bookRepository, PublisherRepository publisherRepository) {
-        this.authorRepository = authorRepository;
-        this.bookRepository = bookRepository;
-        this.publisherRepository = publisherRepository;
-    }
-
     @Override
     public void run(String... args) {
-        // Book 1
-        Author author1 = new Author("Eric", "Evans");
-        Book book1 = new Book("Domain Driven Design", "0321125215");
+        Publisher publisher = Publisher.builder()
+                .publisherName("Addison-Wesley Professional")
+                .address("221 River Street")
+                .city("Hoboken")
+                .state("New Jersey")
+                .zip("07030")
+                .build();
+        Publisher savedPublisher = publisherRepository.save(publisher);
 
-        Author author1Saved = authorRepository.save(author1);
-        Book book1Saved = bookRepository.save(book1);
+        Author author1 = Author.builder()
+                .firstName("Eric")
+                .lastName("Evans")
+                .books(new HashSet<>())
+                .build();
+        Book book1 = Book.builder()
+                .title("Domain Driven Design")
+                .isbn("0321125215")
+                .authors(new HashSet<>())
+                .build();
+        saveAuthorAndBook(author1, book1, savedPublisher);
 
-        // Book 2
-        Author author2 = new Author("Rod", "Johnson");
-        Book book2 = new Book("J2EE Development without EJB", "978-0-764-57390-3");
+        Author author2 = Author.builder()
+                .firstName("Rod")
+                .lastName("Johnson")
+                .books(new HashSet<>())
+                .build();
+        Book book2 = Book.builder()
+                .title("J2EE Development without EJB")
+                .isbn("978-0-764-57390-3")
+                .authors(new HashSet<>())
+                .build();
+        saveAuthorAndBook(author2, book2, savedPublisher);
 
-        Author author2Saved = authorRepository.save(author2);
-        Book book2Saved = bookRepository.save(book2);
+        printCounts();
+    }
 
-        // associate authors with books
-        author1Saved.getBooks().add(book1Saved);
-        author2Saved.getBooks().add(book2Saved);
-        book1Saved.getAuthors().add(author1Saved);
-        book2Saved.getAuthors().add(author2Saved);
+    private void saveAuthorAndBook(Author author, Book book, Publisher publisher) {
+        author.getBooks().add(book);
+        book.getAuthors().add(author);
 
-        // course assignment 1 - add publishers
-        Publisher publisher1 = new Publisher("Addison-Wesley Professional",
-                "221 River Street",
-                "Hoboken",
-                "New Jersey",
-                "07030");
+        book.setPublisher(publisher);
 
-        Publisher publisherSaved = publisherRepository.save(publisher1);
+        authorRepository.save(author);
+        bookRepository.save(book);
+    }
 
-        book1Saved.setPublisher(publisherSaved);
-        book2Saved.setPublisher(publisherSaved);
-
-        // persisting all changes
-        authorRepository.save(author1Saved);
-        authorRepository.save(author2Saved);
-        bookRepository.save(book1Saved);
-        bookRepository.save(book2Saved);
-
-        System.out.println("---In Bootstrap---");
-        System.out.println("Author Count: " + authorRepository.count());
-        System.out.println("Book Count: " + bookRepository.count());
-        System.out.println("Publisher Count: " + publisherRepository.count());
-        System.out.println("-------------------");
+    private void printCounts() {
+        log.info("---In Bootstrap---");
+        log.info("Book Count: " + bookRepository.count());
+        log.info("Author Count: " + authorRepository.count());
+        log.info("Publisher Count: " + publisherRepository.count());
+        log.info("-------------------");
     }
 }
